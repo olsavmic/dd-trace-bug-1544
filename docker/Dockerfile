@@ -1,4 +1,4 @@
-FROM ddtracetestlatest
+FROM mikeol77/ddtrace-bug-1544:latest
 
 USER root
 
