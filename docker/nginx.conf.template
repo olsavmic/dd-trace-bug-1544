@@ -1,0 +1,38 @@
+# Local-only configuration, variables replaced in nginx-entrypoint.sh
+# Production configuration is defined in deploy/ repository
+# These two should be in-sync
+
+user  nginx;
+worker_processes  auto;
+
+error_log  /dev/stderr warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    access_log off;
+
+    server {
+        listen       80;
+        server_name  default_server;
+
+        root ${ROOT_DIR};
+
+        location / {
+            include fastcgi_params;
+
+            fastcgi_param   SCRIPT_FILENAME     ${ROOT_DIR}/${FCGI_INDEX};
+            fastcgi_param   SCRIPT_NAME         /${FCGI_INDEX};
+            fastcgi_index   ${ROOT_DIR}/${FCGI_INDEX};
+
+            fastcgi_pass ${FCGI_HOST}:${FCGI_PORT};
+            fastcgi_read_timeout 300;
+        }
+    }
+}

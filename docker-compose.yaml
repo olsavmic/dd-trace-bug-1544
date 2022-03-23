@@ -1,0 +1,38 @@
+version: '3.4'
+services:
+  php:
+#    image: ddtracetest
+    build:
+      dockerfile: docker/Dockerfile
+    command: [ "php-fpm", "-RF" ]
+    environment:
+      - "USER_UID=${USER_UID:-}"
+      - "DD_TRACE_CLI_ENABLED=true"
+      - "DD_APM_ENABLED=true"
+      - "DD_TRACE_GENERATE_ROOT_SPAN=true"
+      - "DD_TRACE_AUTO_FLUSH_ENABLED=false"
+      - "DD_TRACE_DEBUG=true"
+    volumes:
+      - ./:/app/:cached
+
+  nginx:
+    depends_on:
+      - php
+    image: nginx:1.21.6-alpine
+    command:
+      - "sh"
+      - "/usr/local/bin/entrypoint.sh"
+      - "nginx"
+      - "-g"
+      - "daemon off;"
+    environment:
+      - "ROOT_DIR=/app/public"
+      - "FCGI_HOST=php"
+      - "FCGI_PORT=9000"
+      - "FCGI_INDEX=index.php"
+    volumes:
+      - ./public/:/app/public/
+      - ./docker/nginx-entrypoint.sh:/usr/local/bin/entrypoint.sh
+      - ./docker/nginx.conf.template:/etc/nginx/nginx.conf.template
+    ports:
+      - "381:80"
